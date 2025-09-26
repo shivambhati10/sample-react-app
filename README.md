@@ -4,9 +4,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## Available Scripts
 
-## not running properly issue is in the build part
-
-## still not running
+## not running properly issue is in the build 
+## shivam bhati 
 
 
 ## testing successful
