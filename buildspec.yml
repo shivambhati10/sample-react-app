@@ -2,14 +2,29 @@ version: 0.2
 
 phases:
   install:
-    runtime-versions:
-      nodejs: 18
     commands:
+      - echo Installing dependencies...
       - npm install
+
   build:
     commands:
-      - npm run build
+      - echo Build started on `date`
+      - |
+        if [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/dev" ]; then
+          echo "Building for Dev..."
+          npm run build:dev
+        elif [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/uat" ]; then
+          echo "Building for UAT..."
+          npm run build:uat
+        elif [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/master" ]; then
+          echo "Building for Production..."
+          npm run build:prod
+        else
+          echo "Unknown branch $CODEBUILD_SOURCE_VERSION"
+        fi
+
 artifacts:
   files:
     - '**/*'
   base-directory: build
+
