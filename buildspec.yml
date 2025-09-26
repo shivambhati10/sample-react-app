@@ -9,22 +9,44 @@ phases:
   build:
     commands:
       - echo Build started on `date`
+      - echo Branch: $CODEBUILD_SOURCE_VERSION
+      # Build step branch-wise
       - |
-        if [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/dev" ]; then
-          echo "Building for Dev..."
-          npm run build:dev
-        elif [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/uat" ]; then
-          echo "Building for UAT..."
-          npm run build:uat
-        elif [ "$CODEBUILD_SOURCE_VERSION" == "refs/heads/master" ]; then
-          echo "Building for Production..."
-          npm run build:prod
+        if [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/dev"* ]]; then
+          echo "Building for DEV branch"
+          npm run build
+        elif [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/uat"* ]]; then
+          echo "Building for UAT branch"
+          npm run build
+        elif [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/master"* ]]; then
+          echo "Building for PROD branch"
+          npm run build
         else
-          echo "Unknown branch $CODEBUILD_SOURCE_VERSION"
+          echo "Branch not recognized. Skipping build."
+          exit 1
+        fi
+
+  post_build:
+    commands:
+      - echo "Post build started"
+      # Deploy to correct S3 bucket based on branch
+      - |
+        if [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/dev"* ]]; then
+          echo "Deploying to sample-react-dev"
+          aws s3 sync build/ s3://sample-react-dev --delete
+        elif [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/uat"* ]]; then
+          echo "Deploying to sample-react-uat"
+          aws s3 sync build/ s3://sample-react-uat --delete
+        elif [[ "$CODEBUILD_SOURCE_VERSION" == *"refs/heads/master"* ]]; then
+          echo "Deploying to sample-react-prod"
+          aws s3 sync build/ s3://sample-react-prod --delete
+        else
+          echo "No matching branch for deployment"
+          exit 1
         fi
 
 artifacts:
   files:
     - '**/*'
-  base-directory: build
+
 
